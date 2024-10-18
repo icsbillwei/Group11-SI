@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url("{{ url_for('static', filename='background.png') }}");
+            background-size: cover;
+            background-position: center;
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 60px;
+            padding: 40px;
+        }
+
+        .overlay-text {
+            color: white;
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            line-height: 1.2;
+            animation: fadeInSlide 1s ease-out;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            width: 350px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        form {
+            width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        input[type="email"], 
+        input[type="password"],
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #1e90ff;
+        }
+
+        button {
+            background-color: #1e90ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #0073e6;
+        }
+
+        .create-account {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #1e90ff;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .create-account:hover {
+            color: #0073e6;
+            text-decoration: underline;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .page-container {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .overlay-text {
+                font-size: 2.5rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="overlay-text">
+            Fly With Us, Today
+        </div>
+        <div class="login-container">
+            <h2>User Login</h2>
+            <form action="/" method="POST">
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Log in</button>
+            </form>
+            <a class="create-account" href="#">Create new account</a>
+        </div>
+    </div>
+</body>
+</html>
