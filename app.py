@@ -10,6 +10,14 @@ def login():
         return redirect(url_for('index'))
     return render_template('login.html')
 
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        return redirect(url_for('index'))
+    return render_template('signup.html')
+
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
