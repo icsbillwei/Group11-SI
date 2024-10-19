@@ -51,6 +51,40 @@ def signup():
         
     return render_template('signup.html')
 
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+
+        if email not in users:
+            flash('Email not found', 'error')
+            return render_template('forgot_password.html')
+
+        # Redirect to reset password page if email exists
+        return redirect(url_for('reset_password', email=email))
+
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<email>', methods=['GET', 'POST'])
+def reset_password(email):
+    if request.method == 'POST':
+        password = request.form.get('password')
+
+        if not password:
+            flash('Please enter a new password', 'error')
+            return render_template('reset_password.html', email=email)
+
+        if email not in users:
+            flash('Invalid reset request', 'error')
+            return redirect(url_for('login'))
+
+        # Update the password
+        users[email]['password'] = generate_password_hash(password)
+        flash('Password has been reset successfully', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('reset_password.html', email=email)
+
 @app.route('/logout')
 def logout():
     session.pop('email', None)
