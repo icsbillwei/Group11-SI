@@ -121,6 +121,27 @@
             text-decoration: underline;
         }
 
+        /* Alert styles */
+        .alert {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .page-container {
@@ -141,13 +162,21 @@
             Join Us Today
         </div>
         <div class="login-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
             <h2>Create New Account</h2>
-            <form action="/" method="POST">
+            <form action="{{ url_for('signup') }}" method="POST">
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="password" placeholder="Password" required>
                 <button type="submit">Sign Up</button>
             </form>
-            <a class="create-account" href="/">Back to Login</a>
+            <a class="create-account" href="{{ url_for('login') }}">Back to Login</a>
         </div>
     </div>
 </body>
