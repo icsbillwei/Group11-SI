@@ -29,7 +29,7 @@ Ensure you have the following installed:
     ```bash
     python app.py
     ```
-The server should start at 'http://127.0.0.1:5000/' by default. You can now access the application in your web browser.
+The server should start at http://127.0.0.1:5000/ by default. You can now access the application in your web browser.
 
 ## Running the Test Scripts
 
