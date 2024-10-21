@@ -7,9 +7,6 @@ app.secret_key = 'your-secret-key-here'  # Required for session management
 # Temporary storage for users (will be replaced with proper database later)
 users = {}
 
-# Temporary storage for users (will be replaced with proper database later)
-users = {}
-
 # Login at /, signup at /signup, forgot password at /forgot_password, reset password at /reset_password/<email>, logout at /logout, index at /index
 # Three specifications implemented: login, signup, forgot password (First 3 specifications from A1)
 
