@@ -2,10 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Required for session management
-
-# Temporary storage for users (will be replaced with proper database later)
-users = {}
 
 # Login at /, signup at /signup, forgot password at /forgot_password, reset password at /reset_password/<email>, logout at /logout, index at /index
 # Three specifications implemented: login, signup, forgot password (First 3 specifications from A1)
@@ -19,7 +15,6 @@ app.secret_key = 'secret'
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-
         # Get email and password from form
         email = request.form.get('email')
         password = request.form.get('password')
