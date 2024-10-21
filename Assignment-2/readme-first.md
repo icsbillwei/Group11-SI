@@ -1,5 +1,7 @@
 # Project Setup and Execution Guide
-
+Bill Wei -- icsbillwei
+Simone Jiang -- Sjmoon07
+Lucas Chu -- lucccccys
 ## Prerequisites
 Ensure you have the following installed:
 - Python 3.x
