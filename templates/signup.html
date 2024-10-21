@@ -162,6 +162,7 @@
             Join Us Today
         </div>
         <div class="login-container">
+            <!-- Flask flash message display -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
