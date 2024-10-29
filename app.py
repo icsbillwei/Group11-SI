@@ -1,38 +1,48 @@
+# 1. First, modify app.py
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Temporary storage for users (will be replaced with proper database later)
-users = {}
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'  # Using SQLite for simplicity
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = 'secret'  # Keep your existing secret key
 
-# Login at /, signup at /signup, forgot password at /forgot_password, reset password at /reset_password/<email>, logout at /logout, index at /index
-# Three specifications implemented: login, signup, forgot password (First 3 specifications from A1)
+# Initialize SQLAlchemy
+db = SQLAlchemy(app)
 
-# Please install dependencies first from requirements.txt
-# Then it should run with python app.py
+# User Model
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# For simplicity and ease of get it running the secret key is hardcoded here but in production it would be accessed via env variable
-app.secret_key = 'secret'
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
 
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+# Routes
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Get email and password from form
         email = request.form.get('email')
         password = request.form.get('password')
         
-        # Check if email and password are provided
         if not email or not password:
             flash('Please provide both email and password', 'error')
             return render_template('login.html')
         
-        # Redirect to index if email and password are correct
-        if email in users and check_password_hash(users[email]['password'], password):
+        user = User.query.filter_by(email=email).first()
+        if user and user.check_password(password):
             session['email'] = email
             return redirect(url_for('index'))
         
-        # Show error message if email or password is incorrect
         flash('Invalid email or password', 'error')
         return render_template('login.html')
             
@@ -45,59 +55,66 @@ def signup():
         password = request.form.get('password')
         
         if not email or not password:
-            # Show error message if email or password is not provided
             flash('Please provide both email and password', 'error')
             return render_template('signup.html')
             
-        if email in users:
-            # Show error message if email already exists
+        if User.query.filter_by(email=email).first():
             flash('Email already exists', 'error')
             return render_template('signup.html')
             
-        # Store hashed password
-        hashed_password = generate_password_hash(password)
-        users[email] = {
-            'password': hashed_password
-        }
+        # Create new user
+        new_user = User(email=email)
+        new_user.set_password(password)
         
-        flash('Account created successfully', 'success')
-        return redirect(url_for('login'))
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Account created successfully', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred. Please try again.', 'error')
+            return render_template('signup.html')
         
     return render_template('signup.html')
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
-    # Handle forgot password form submission, initially ask for email
     if request.method == 'POST':
         email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
 
-        if email not in users:
+        if not user:
             flash('Email not found', 'error')
             return render_template('forgot_password.html')
 
-        # Redirect to reset password page if email exists
         return redirect(url_for('reset_password', email=email))
 
     return render_template('forgot_password.html')
 
 @app.route('/reset_password/<email>', methods=['GET', 'POST'])
 def reset_password(email):
-    # Handle reset password form submission, follows forgot password
     if request.method == 'POST':
         password = request.form.get('password')
+        user = User.query.filter_by(email=email).first()
 
         if not password:
             flash('Please enter a new password', 'error')
             return render_template('reset_password.html', email=email)
 
-        if email not in users:
+        if not user:
             flash('Invalid reset request', 'error')
             return redirect(url_for('login'))
 
-        # Update the password
-        users[email]['password'] = generate_password_hash(password)
-        flash('Password has been reset successfully', 'success')
-        return redirect(url_for('login'))
+        user.set_password(password)
+        try:
+            db.session.commit()
+            flash('Password has been reset successfully', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred. Please try again.', 'error')
+            return render_template('reset_password.html', email=email)
 
     return render_template('reset_password.html', email=email)
 
@@ -109,11 +126,16 @@ def logout():
 
 @app.route('/index')
 def index():
-    # Placeholder main application page
     if 'email' not in session:
         flash('Please login first', 'error')
         return redirect(url_for('login'))
     return render_template('index.html')
 
+# Create database tables
+def init_db():
+    with app.app_context():
+        db.create_all()
+
 if __name__ == '__main__':
+    init_db()  # Initialize database tables
     app.run(debug=True)
