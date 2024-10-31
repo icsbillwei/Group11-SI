@@ -26,6 +26,17 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+    
+# Flight Model
+class Flight(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    flight_number = db.Column(db.String(50), unique=True, nullable=False)
+    departure_airport = db.Column(db.String(255), nullable=False)
+    arrival_location = db.Column(db.String(255), nullable=False)
+    departure_time = db.Column(db.DateTime, nullable=False)
+    arrival_time = db.Column(db.DateTime, nullable=False)
+    cost = db.Column(db.Float, nullable=False)
+
 
 # Routes
 @app.route('/', methods=['GET', 'POST'])
@@ -41,7 +52,7 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             session['email'] = email
-            return redirect(url_for('index'))
+            return redirect(url_for('book_flight'))
         
         flash('Invalid email or password', 'error')
         return render_template('login.html')
@@ -118,11 +129,45 @@ def reset_password(email):
 
     return render_template('reset_password.html', email=email)
 
+@app.route('/search_flights', methods=['POST'])
+def search_flights():
+    departure_airport = request.form.get('departure_airport')
+    arrival_location = request.form.get('arrival_location')
+    departure_date = request.form.get('departure_date')
+
+    if not departure_airport or not arrival_location or not departure_date:
+        flash('Please provide all required information', 'error')
+        return redirect(url_for('book_flight'))
+
+    # Filter flights based on user's criteria
+    matching_flights = Flight.query.filter(
+        Flight.departure_airport == departure_airport,
+        Flight.arrival_location == arrival_location,
+        db.func.date(Flight.departure_time) == departure_date
+    ).all()
+
+    if not matching_flights:
+        flash('No flights match your search criteria. Please try again.', 'error')
+        return redirect(url_for('book_flight'))
+
+    return render_template('flight_results.html', flights=matching_flights)
+
+
 @app.route('/logout')
 def logout():
     session.pop('email', None)
     flash('You have been logged out', 'success')
     return redirect(url_for('login'))
+
+# entry point to the app
+@app.route('/book_flight', methods=['GET', 'POST'])
+def book_flight():
+    if 'email' not in session:
+        flash('Please login first', 'error')
+        return redirect(url_for('login'))
+
+    return render_template('book_flight.html')
+
 
 @app.route('/index')
 def index():
@@ -135,6 +180,21 @@ def index():
 def init_db():
     with app.app_context():
         db.create_all()
+
+    # Check if flights already exist
+        if Flight.query.count() == 0:
+            # Add some flight data for initialization
+            flights = [
+                Flight(flight_number="AB123", departure_airport="JFK", arrival_location="LAX",
+                       departure_time=datetime(2024, 11, 5, 14, 0), arrival_time=datetime(2024, 11, 5, 17, 30),
+                       cost=299.99),
+                Flight(flight_number="CD456", departure_airport="JFK", arrival_location="SFO",
+                       departure_time=datetime(2024, 11, 6, 16, 0), arrival_time=datetime(2024, 11, 6, 19, 45),
+                       cost=349.99),
+            ]
+            
+            db.session.bulk_save_objects(flights)
+            db.session.commit()
 
 if __name__ == '__main__':
     init_db()  # Initialize database tables

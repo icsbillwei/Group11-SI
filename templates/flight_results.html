@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Results</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url("{{ url_for('static', filename='background.png') }}");
+            background-size: cover;
+            background-position: center;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h2 {
+            color: white;
+            font-size: 2.5rem;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .results-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .flight-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 15px 0;
+            transition: transform 0.2s;
+        }
+
+        .flight-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .flight-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .flight-info h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .flight-info p {
+            margin: 0;
+            color: #666;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .results-container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div class="burger-icon" onclick="toggleDropdown()">
+                <div class="burger-lines"></div>
+                <div class="burger-lines"></div>
+                <div class="burger-lines"></div>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="{{ url_for('book_flight') }}">Home</a>
+                <!-- add more links here as needed -->
+            </div>
+        </div>
+
+        <h2>Available Flights</h2>
+
+        <div class="results-container">
+            {% if flights %}
+                {% for flight in flights %}
+                    <div class="flight-card">
+                        <div class="flight-info">
+                            <h3>Flight {{ flight.flight_number }}</h3>
+                            <p>From: {{ flight.departure_airport }} at {{ flight.departure_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                            <p>To: {{ flight.arrival_location }} at {{ flight.arrival_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                            <p>Cost: ${{ flight.cost }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No flights match your search criteria.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown() {
+            const dropdown = document.getElementById("dropdownMenu");
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+    </script>
+</body>
+</html>
