@@ -1,6 +1,7 @@
 # 1. First, modify app.py
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
@@ -141,8 +142,8 @@ def search_flights():
 
     # Filter flights based on user's criteria
     matching_flights = Flight.query.filter(
-        Flight.departure_airport == departure_airport,
-        Flight.arrival_location == arrival_location,
+        Flight.departure_airport.ilike(departure_airport),
+        Flight.arrival_location.ilike(arrival_location),
         db.func.date(Flight.departure_time) == departure_date
     ).all()
 
@@ -166,8 +167,14 @@ def book_flight():
         flash('Please login first', 'error')
         return redirect(url_for('login'))
 
-    return render_template('book_flight.html')
+    # Fetch distinct airport codes from both departure_airport and arrival_location
+    departure_airports = db.session.query(Flight.departure_airport).distinct().all()
+    arrival_airports = db.session.query(Flight.arrival_location).distinct().all()
 
+    # Combine and deduplicate the airport codes
+    airport_codes = set(code[0] for code in departure_airports + arrival_airports)
+
+    return render_template('book_flight.html', airport_codes=airport_codes)
 
 @app.route('/index')
 def index():
