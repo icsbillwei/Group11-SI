@@ -37,6 +37,17 @@ class Flight(db.Model):
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     cost = db.Column(db.Float, nullable=False)
+    seats = db.Column(db.JSON, nullable=False, default=lambda: generate_seat_map())
+
+def generate_seat_map():
+    # Create a default seating map (e.g., 5x4 grid with random occupancy)
+    # 1 represents occupied, 0 represents available
+    return [[0, 1, 0, 0],
+            [0, 0, 0, 1],
+            [1, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 0]]
+
 
 
 # Routes
@@ -154,6 +165,25 @@ def search_flights():
     return render_template('flight_results.html', flights=matching_flights)
 
 
+@app.route('/select_seat/<int:flight_id>', methods=['GET', 'POST'])
+def select_seat(flight_id):
+    flight = Flight.query.get_or_404(flight_id)
+
+    if request.method == 'POST':
+        selected_seat = request.form.get('seat')
+        row, col = map(int, selected_seat.split(','))
+
+        if flight.seats[row][col] == 0:  # Check if seat is available
+            flight.seats[row][col] = 1  # Mark seat as occupied
+            db.session.commit()
+            # todo card payment page
+        else:
+            flash('Seat is already occupied. Please select another.', 'error')
+
+    return render_template('select_seat.html', flight=flight)
+
+
+
 @app.route('/logout')
 def logout():
     session.pop('email', None)
@@ -194,10 +224,10 @@ def init_db():
             flights = [
                 Flight(flight_number="AB123", departure_airport="JFK", arrival_location="LAX",
                        departure_time=datetime(2024, 11, 5, 14, 0), arrival_time=datetime(2024, 11, 5, 17, 30),
-                       cost=299.99),
+                       cost=299.99, seats=generate_seat_map()),
                 Flight(flight_number="CD456", departure_airport="JFK", arrival_location="SFO",
                        departure_time=datetime(2024, 11, 6, 16, 0), arrival_time=datetime(2024, 11, 6, 19, 45),
-                       cost=349.99),
+                       cost=349.99, seats=generate_seat_map()),
             ]
             
             db.session.bulk_save_objects(flights)

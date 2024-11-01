@@ -45,8 +45,8 @@
         .results-container {
             background-color: rgba(255, 255, 255, 0.9);
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
             width: 100%;
             max-width: 800px;
         }
@@ -54,14 +54,14 @@
         .flight-card {
             background-color: white;
             border-radius: 10px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
             padding: 20px;
             margin: 15px 0;
             transition: transform 0.2s;
         }
 
         .flight-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
         }
 
         .flight-info {
@@ -85,6 +85,13 @@
             .results-container {
                 width: 90%;
             }
+        }
+
+        a {
+            text-decoration: none;
+            color: #1e90ff;
+            font-size: medium;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -114,6 +121,8 @@
                             <p>To: {{ flight.arrival_location }} at {{ flight.arrival_time.strftime('%Y-%m-%d %H:%M') }}</p>
                             <p>Cost: ${{ flight.cost }}</p>
                         </div>
+                        <br>
+                        <a href="{{ url_for('select_seat', flight_id=flight.id) }}" class="btn">Select Seat</a>
                     </div>
                 {% endfor %}
             {% else %}
