@@ -164,6 +164,14 @@ def search_flights():
 
     return render_template('flight_results.html', flights=matching_flights)
 
+@app.route('/payment_method/<int:flight_id>', methods=['GET', 'POST'])
+def payment_method(flight_id):
+    if request.method == 'POST':
+        # Process payment here
+        flash('Payment successful! Thank you for your purchase.', 'success')
+        return redirect(url_for('book_flight'))
+
+    return render_template('payment_method.html', flight_id=flight_id)
 
 @app.route('/select_seat/<int:flight_id>', methods=['GET', 'POST'])
 def select_seat(flight_id):
@@ -176,7 +184,7 @@ def select_seat(flight_id):
         if flight.seats[row][col] == 0:  # Check if seat is available
             flight.seats[row][col] = 1  # Mark seat as occupied
             db.session.commit()
-            # todo card payment page
+            return redirect(url_for('payment_method', flight_id=flight_id))
         else:
             flash('Seat is already occupied. Please select another.', 'error')
 
