@@ -1,7 +1,8 @@
 import unittest
 from flask import Flask
-from app import app, db, User
+from app import app, db, User, Flight, generate_seat_map
 from werkzeug.security import generate_password_hash
+from datetime import datetime
 
 class FlaskAuthTests(unittest.TestCase):
 
@@ -20,6 +21,20 @@ class FlaskAuthTests(unittest.TestCase):
             test_user.set_password(self.test_password)
             db.session.add(test_user)
             db.session.commit()
+
+            test_flight = Flight(
+                flight_number="AB123",
+                departure_airport="JFK",
+                arrival_location="LAX",
+                departure_time=datetime(2024, 11, 5, 14, 0),
+                arrival_time=datetime(2024, 11, 5, 17, 30),
+                cost=299.99,
+                seats=generate_seat_map()
+            )
+            db.session.add(test_flight)
+            db.session.commit()
+
+            self.test_flight = Flight.query.filter_by(flight_number="AB123").first()
 
     def tearDown(self):
         # Clear users after each test
@@ -110,5 +125,24 @@ class FlaskAuthTests(unittest.TestCase):
         response = self.app.get('/book_flight', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
 
+    def test_select_seat_available(self):
+        # Verify if a user can successfully select an available seat
+        with self.app.session_transaction() as session:
+            session['email'] = self.test_email  # Simulate logged-in user
+        
+        response = self.app.post(f'/select_seat/{self.test_flight.id}', data={
+            'seat': '0,0'  # Select an available seat
+        }, follow_redirects=True)
+        self.assertNotIn(b'Seat is already occupied. Please select another.', response.data)
+
+    def test_search_flights_with_available_seat(self):
+        # Verify that a flight with available seats appears in search results
+        response = self.app.post('/search_flights', data={
+            'departure_airport': 'JFK',
+            'arrival_location': 'LAX',
+            'departure_date': '2024-11-05'
+        }, follow_redirects=True)
+        self.assertIn(b'AB123', response.data)  # Flight number should appear in search results
+    
 if __name__ == '__main__':
     unittest.main()
