@@ -149,6 +149,12 @@
             color: #333;
             margin-top: 20px;
         }
+
+        .seat-info {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
         
         /* Responsive design */
         @media (max-width: 768px) {
@@ -196,6 +202,9 @@
                         <div class="date-info">
                             {{ booking.flight.departure_time.strftime('%b. %d, %I:%M %p') }} —
                             {{ booking.flight.arrival_time.strftime('%b. %d, %I:%M %p') }}
+                        </div>
+                        <div class="seat-info">
+                            Seat: {{ booking.seats }}
                         </div>
                     </div>
                     <form action="{{ url_for('cancel_booking', booking_id=booking.id) }}" method="POST" onsubmit="return confirmCancellation()">

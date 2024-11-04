@@ -40,7 +40,12 @@ class Flight(db.Model):
     cost = db.Column(db.Float, nullable=False)
     seats = db.Column(MutableList.as_mutable(JSON), nullable=False)
 
-# Booking Model
+    # Relationships
+    bookings = db.relationship('Booking', backref='flight', lazy=True)
+
+    def __repr__(self):
+        return f'<Flight {self.flight_number}>'
+
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String(255), nullable=False)
@@ -48,6 +53,10 @@ class Booking(db.Model):
     seat_row = db.Column(db.Integer, nullable=False)
     seat_col = db.Column(db.Integer, nullable=False)
     booked_at = db.Column(db.DateTime, default=datetime.utcnow)
+    seats = db.Column(db.String(10), nullable=False)
+
+    def __repr__(self):
+        return f'<Booking {self.id} - Flight {self.flight_id} Seat {self.seats}>'
     flight = db.relationship('Flight', backref='bookings')
     
     __table_args__ = (
@@ -181,6 +190,36 @@ def search_flights():
 
     return render_template('flight_results.html', flights=matching_flights)
 
+@app.route('/payment_method/<int:flight_id>', methods=['GET', 'POST'])
+def payment_method(flight_id):
+    if request.method == 'POST':
+        # Process payment here
+        payment_success = True  # Replace with actual payment confirmation logic
+
+        if payment_success:
+            # Retrieve seat and flight info from session
+            seat_label = session.get('selected_seat')
+            user_email = session.get('email')
+            flight = Flight.query.get_or_404(flight_id)
+
+            # Create a booking record in the database with the seat information
+            new_booking = Booking(user_email=user_email, flight_id=flight.id, seats=seat_label)
+            db.session.add(new_booking)
+            db.session.commit()
+
+            # Clear session data after successful booking
+            session.pop('selected_seat', None)
+            session.pop('flight_id', None)
+
+            flash('Payment successful! Your booking has been confirmed.', 'success')
+            return redirect(url_for('booking_history'))
+        else:
+            flash('Payment failed. Please try again.', 'error')
+
+        return redirect(url_for('book_flight'))
+
+    return render_template('payment_method.html', flight_id=flight_id)
+
 @app.route('/select_seat/<int:flight_id>', methods=['GET', 'POST'])
 def select_seat(flight_id):
     if 'email' not in session:
@@ -203,6 +242,13 @@ def select_seat(flight_id):
             return redirect(url_for('select_seat', flight_id=flight_id))
             
         row, col = map(int, selected_seat.split(','))
+        # Convert row and col to seat label (e.g., 2A)
+        seat_label = f"{row + 1}{chr(65 + col)}"
+
+        # Store selected seat in session temporarily
+        session['selected_seat'] = seat_label
+        session['flight_id'] = flight.id
+
         
         # Create new booking
         new_booking = Booking(
