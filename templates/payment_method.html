@@ -115,11 +115,6 @@
             border-radius: 5px;
         }
 
-        input[type="text"], 
-        input[type="date"] {
-            transition: border-color 0.3s;
-        }
-
         input[type="text"]:focus,
         input[type="date"]:focus {
             outline: none;
@@ -146,6 +141,14 @@
 
         .input-group div {
             flex: 1;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+            display: none;
+            margin-top: -10px;
+            margin-bottom: 10px;
         }
 
         /* Responsive design */
@@ -187,23 +190,24 @@
                 {% endif %}
             {% endwith %}
 
-            <form method="POST" action="{{ url_for('payment_method', flight_id=flight_id) }}">
+            <form method="POST" action="{{ url_for('payment_method', flight_id=flight_id) }}" onsubmit="return validateExpiryDate()">
                 <label for="card-number">Card Number</label>
                 <input type="text" id="card-number" name="card_number" 
-                placeholder="1234 5678 1234 5678" required
-                minlength="16" maxlength="16" inputmode="numeric" pattern="\d*">
+                placeholder="1234 5678 1234 5678" required minlength="16" 
+                required maxlength="16" inputmode="numeric" pattern="\d*">
 
                 <div class="input-group">
                     <div>
                         <label for="expiry-date">Expire Date</label>
                         <input type="text" id="expiry-date" 
-                        name="expiry_date" placeholder="MM/YY" required
-                        minlength="4" maxlength="4" inputmode="numeric" pattern="\d*">
+                        name="expiry_date" placeholder="MM/YY" 
+                        required maxlength="5" inputmode="numeric" pattern="(0[1-9]|1[0-2])\/\d{2}">
+                        <div class="error-message" id="expiry-error">Card is expired. Please enter a valid expiration date.</div>
                     </div>
                     <div>
                         <label for="cvv">CVV</label>
                         <input type="text" id="cvv" name="cvv" placeholder="CVV" required
-                        minlength="3" maxlength="3" inputmode="numeric" pattern="\d*">
+                        minlength="3" required maxlength="3" inputmode="numeric" pattern="\d*">
                     </div>
                 </div>
 
@@ -216,6 +220,31 @@
         function toggleDropdown() {
             const dropdown = document.getElementById("dropdownMenu");
             dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+
+        function getToday() {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999); // Set to the end of today for accurate comparison
+            return today;
+        }
+
+        function validateExpiryDate() {
+            const expiryInput = document.getElementById("expiry-date").value;
+            const expiryError = document.getElementById("expiry-error");
+
+            // Get the month and year from the input (MM/YY)
+            const [month, year] = expiryInput.split("/").map(Number);
+            const expiryDate = new Date(`20${year}`, month, 0);  // Convert to a full date
+
+            const today = getToday();
+
+            if (expiryDate < today) {
+                expiryError.style.display = "block";
+                return false;
+            }
+
+            expiryError.style.display = "none";
+            return true;
         }
     </script>
 </body>
