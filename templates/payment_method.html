@@ -166,6 +166,7 @@
             </div>
             <div class="dropdown-menu" id="dropdownMenu">
                 <a href="{{ url_for('book_flight') }}">Home</a>
+                <a href="{{ url_for('booking_history') }}">Booking History</a>
                 <!-- Add more links here if needed -->
             </div>
         </div>
@@ -188,16 +189,21 @@
 
             <form method="POST" action="{{ url_for('payment_method', flight_id=flight_id) }}">
                 <label for="card-number">Card Number</label>
-                <input type="text" id="card-number" name="card_number" placeholder="1234 5678 1234 5678" required>
+                <input type="text" id="card-number" name="card_number" 
+                placeholder="1234 5678 1234 5678" required
+                minlength="16" maxlength="16" inputmode="numeric" pattern="\d*">
 
                 <div class="input-group">
                     <div>
                         <label for="expiry-date">Expire Date</label>
-                        <input type="text" id="expiry-date" name="expiry_date" placeholder="MM/YY" required>
+                        <input type="text" id="expiry-date" 
+                        name="expiry_date" placeholder="MM/YY" required
+                        minlength="4" maxlength="4" inputmode="numeric" pattern="\d*">
                     </div>
                     <div>
                         <label for="cvv">CVV</label>
-                        <input type="text" id="cvv" name="cvv" placeholder="CVV" required>
+                        <input type="text" id="cvv" name="cvv" placeholder="CVV" required
+                        minlength="3" maxlength="3" inputmode="numeric" pattern="\d*">
                     </div>
                 </div>
 
