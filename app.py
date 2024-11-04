@@ -188,15 +188,12 @@ def select_seat(flight_id):
 
     flight = Flight.query.get_or_404(flight_id)
     
-    # For both GET and POST, first update the seat map based on current bookings
     current_bookings = Booking.query.filter_by(flight_id=flight_id).all()
     updated_seats = generate_seat_map()
     
-    # Mark all booked seats as occupied
     for booking in current_bookings:
         updated_seats[booking.seat_row][booking.seat_col] = 1
     
-    # Update the flight's seat map
     flight.seats = updated_seats
     db.session.commit()
 
@@ -278,7 +275,7 @@ def init_db():
     with app.app_context():
         db.create_all()
         
-        # Add sample flights if none exist
+        # sample flights
         if Flight.query.count() == 0:
             flights = [
                 Flight(
