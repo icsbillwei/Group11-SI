@@ -39,6 +39,15 @@ class Flight(db.Model):
     cost = db.Column(db.Float, nullable=False)
     seats = db.Column(db.JSON, nullable=False, default=lambda: generate_seat_map())
 
+# Booking Model to store user bookings
+class Booking(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_email = db.Column(db.String(255), nullable=False)  # This is the new column for user email
+    flight_id = db.Column(db.Integer, db.ForeignKey('flight.id'), nullable=False)
+    booked_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    flight = db.relationship('Flight', backref='bookings')
+
 def generate_seat_map():
     # Create a default seating map (e.g., 5x4 grid with random occupancy)
     # 1 represents occupied, 0 represents available
@@ -184,6 +193,11 @@ def select_seat(flight_id):
         if flight.seats[row][col] == 0:  # Check if seat is available
             flight.seats[row][col] = 1  # Mark seat as occupied
             db.session.commit()
+
+            # Create a booking for this flight
+            new_booking = Booking(user_email=session['email'], flight_id=flight.id)
+            db.session.add(new_booking)
+            db.session.commit()
             return redirect(url_for('payment_method', flight_id=flight_id))
         else:
             flash('Seat is already occupied. Please select another.', 'error')
@@ -213,6 +227,44 @@ def book_flight():
     airport_codes = set(code[0] for code in departure_airports + arrival_airports)
 
     return render_template('book_flight.html', airport_codes=airport_codes)
+
+@app.route('/booking_history')
+def booking_history():
+    if 'email' not in session:
+        flash('Please login first', 'error')
+        return redirect(url_for('login'))
+    
+    bookings = Booking.query.filter_by(user_email=session['email']).all()
+
+    return render_template('booking_history.html', bookings=bookings)
+
+
+@app.route('/cancel_booking/<int:booking_id>', methods=['POST'])
+def cancel_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    
+    if 'email' not in session:
+        flash('Unauthorized action', 'error')
+        return redirect(url_for('booking_history'))
+    
+    try:
+        # Release the seat in the flight's seat map
+        flight = Flight.query.get(booking.flight_id)
+        for row in flight.seats:
+            for i in range(len(row)):
+                if row[i] == 1:
+                    row[i] = 0  # Mark the seat as available
+                    break
+
+        db.session.delete(booking)
+        db.session.commit()
+        flash('Booking canceled successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred. Please try again.', 'error')
+    
+    return redirect(url_for('booking_history'))
+
 
 @app.route('/index')
 def index():
