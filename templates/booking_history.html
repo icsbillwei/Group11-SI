@@ -41,7 +41,7 @@
         .burger-lines {
             width: 30px;
             height: 3px;
-            background-color: black;
+            background-color: white;
             margin: 6px 0;
         }
 
@@ -155,6 +155,27 @@
             color: #666;
             margin-top: 5px;
         }
+
+        /* Alert styles */
+        .alert {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
         
         /* Responsive design */
         @media (max-width: 768px) {
@@ -185,9 +206,23 @@
             <div class="dropdown-menu" id="dropdownMenu">
                 <a href="{{ url_for('book_flight') }}">Home</a>
                 <a href="{{ url_for('booking_history') }}">Booking History</a>
+                <a href="{{ url_for('logout') }}">Log Out</a>
                 <!-- Add more links here if needed -->
             </div>
         </div>
+
+        <!-- Display flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div>
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
 
         {% if bookings %}
             {% for booking in bookings %}
