@@ -196,6 +196,7 @@ class FlaskAuthTests(unittest.TestCase):
         response = self.app.post(f'/cancel_booking/{booking_id}', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Booking canceled successfully', response.data)
+        print("Cancel booking test completed successfully")
 
     def test_14_logout(self):
         print("Running logout test")
