@@ -1,3 +1,26 @@
+"""
+Flight Ticket Booking System
+
+This Flask application allows users to create accounts, log in, book flights, 
+select seats, and view their booking history. Users can search for flights 
+by departure and arrival airports, as well as book and cancel flights. 
+The app also includes payment handling for seat bookings and a login system 
+with account creation and password reset options.
+
+Input: 
+- User credentials (email, password)
+- Flight search criteria (departure airport, arrival location, departure date)
+- Seat selection (row, column)
+
+Output:
+- Flight search results
+- Booking confirmations and history
+
+Run Instructions:
+1. Ensure Flask and SQLAlchemy are installed.
+2. Run `python app.py` to start the server.
+3. Access the app via `http://127.0.0.1:5000` in a web browser.
+"""
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
@@ -18,19 +41,43 @@ db = SQLAlchemy(app)
 
 # User Model
 class User(db.Model):
+    """
+    Represents a user account in the system.
+
+    Attributes:
+    - email: unique identifier for the user.
+    - password: hashed password for secure authentication.
+    - created_at: timestamp of account creation.
+
+    Methods:
+    - set_password: hashes and sets the user's password.
+    - check_password: verifies the provided password.
+    """
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
+        """Hashes and sets the password for secure storage."""
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
+        """Verifies the provided password against the stored hash."""
         return check_password_hash(self.password, password)
 
 # Flight Model
 class Flight(db.Model):
+    """
+    Represents a flight in the system.
+
+    Attributes:
+    - flight_number: unique identifier for the flight.
+    - departure_airport, arrival_location: location details.
+    - departure_time, arrival_time: scheduling information.
+    - cost: ticket price.
+    - seats: seat availability map.
+    """
     id = db.Column(db.Integer, primary_key=True)
     flight_number = db.Column(db.String(50), unique=True, nullable=False)
     departure_airport = db.Column(db.String(255), nullable=False)
@@ -43,7 +90,18 @@ class Flight(db.Model):
     def __repr__(self):
         return f'<Flight {self.flight_number}>'
 
+# Booking Model
 class Booking(db.Model):
+    """
+    Represents a flight booking made by a user.
+
+    Attributes:
+    - user_email: email of the booking user.
+    - flight_id: associated flight ID.
+    - seat_row, seat_col: booked seat location.
+    - booked_at: booking timestamp.
+    - seats: seat label (e.g., 2A).
+    """
     id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String(255), nullable=False)
     flight_id = db.Column(db.Integer, db.ForeignKey('flight.id'), nullable=False)
@@ -62,10 +120,12 @@ class Booking(db.Model):
     )
 
 def generate_seat_map():
+    """Generates a 5x4 seat availability map for each flight."""
     return [[0 for _ in range(4)] for _ in range(5)]  # 5x4 grid of available seats
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    """Handles user login, verifies credentials, and starts a session."""
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -86,6 +146,7 @@ def login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """Allows new users to register by providing email and password."""
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -115,6 +176,7 @@ def signup():
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
+    """Handles user requests to reset their password via email."""
     if request.method == 'POST':
         email = request.form.get('email')
         user = User.query.filter_by(email=email).first()
@@ -129,6 +191,7 @@ def forgot_password():
 
 @app.route('/reset_password/<email>', methods=['GET', 'POST'])
 def reset_password(email):
+    """Resets user password for the provided email address."""
     if request.method == 'POST':
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
@@ -155,6 +218,7 @@ def reset_password(email):
 
 @app.route('/book_flight')
 def book_flight():
+    """Displays the flight booking page with search options."""
     if 'email' not in session:
         flash('Please login first', 'error')
         return redirect(url_for('login'))
@@ -167,6 +231,7 @@ def book_flight():
 
 @app.route('/search_flights', methods=['POST'])
 def search_flights():
+    """Searches for flights matching user-provided criteria."""
     departure_airport = request.form.get('departure_airport')
     arrival_location = request.form.get('arrival_location')
     departure_date = request.form.get('departure_date')
@@ -189,6 +254,7 @@ def search_flights():
 
 @app.route('/payment_method/<int:flight_id>', methods=['GET', 'POST'])
 def payment_method(flight_id):
+    """Processes payment and confirms seat booking."""
     if request.method == 'POST':
         # Process payment here
         payment_success = True  # Replace with actual payment confirmation logic
@@ -201,7 +267,6 @@ def payment_method(flight_id):
             seat_row = session.get('seat_row')
             seat_col = session.get('seat_col')
 
-            # print(f"seat row: {seat_row}, seat col: {seat_col}")
 
             # Create a booking record in the database with the seat information
             new_booking = Booking(
@@ -230,6 +295,7 @@ def payment_method(flight_id):
 
 @app.route('/select_seat/<int:flight_id>', methods=['GET', 'POST'])
 def select_seat(flight_id):
+    """Allows user to select available seats for a specific flight."""
     if 'email' not in session:
         return redirect(url_for('login'))
 
@@ -260,10 +326,7 @@ def select_seat(flight_id):
         session['seat_col'] = col
         
         try:
-            # Add booking and update seat map
-            # db.session.add(new_booking)
-            # flight.seats[row][col] = 1
-            # db.session.commit()
+            # Check if the seat is already booked
             return redirect(url_for('payment_method', flight_id=flight_id))
         except Exception as e:
             print(e)
@@ -274,6 +337,7 @@ def select_seat(flight_id):
 
 @app.route('/booking_history')
 def booking_history():
+    """Displays booking history for the logged-in user."""
     if 'email' not in session:
         return redirect(url_for('login'))
     
@@ -282,6 +346,7 @@ def booking_history():
 
 @app.route('/cancel_booking/<int:booking_id>', methods=['POST'])
 def cancel_booking(booking_id):
+    """Allows user to cancel a booking and releases the seat."""
     if 'email' not in session:
         return redirect(url_for('login'))
 
@@ -308,11 +373,13 @@ def cancel_booking(booking_id):
 
 @app.route('/logout')
 def logout():
+    """Logs out the user and clears session data."""
     session.pop('email', None)
     flash('You have been logged out', 'success')
     return redirect(url_for('login'))
 
 def init_db():
+    """Initializes the database and adds sample flight data."""
     with app.app_context():
         db.create_all()
         
