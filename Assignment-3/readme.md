@@ -62,8 +62,11 @@ The following sample flights are preloaded into the system upon the first run:
 
 ## Running the Test Scripts
 
-**Important**: Before running the test script, delete the `users.db` database file to ensure a clean database state. Then, follow these steps:
-
+**Important**: Before running the test script, delete the `users.db` database file to ensure a clean database state. 
+   ```bash
+   rm -f instance/users.db
+   ```
+Then, follow these steps:
 1. **Ensure the Flask application is not running** (the test client will handle server initialization).
 2. **Execute the test suite:**
     ```bash
