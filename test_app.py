@@ -160,6 +160,7 @@ class FlaskAuthTests(unittest.TestCase):
     def test_10_select_seat(self):
         """Test selecting a seat for a specified flight."""
         print("Running select seat test")
+        # Verify that a user can select a seat for a flight
         with self.app.session_transaction() as session:
             session['email'] = self.test_email     
         response = self.app.post(f'/select_seat/{self.test_flight.id}', data={
@@ -172,6 +173,7 @@ class FlaskAuthTests(unittest.TestCase):
     def test_11_payment_method_success(self):
         """Test payment processing and booking confirmation."""
         print("Running payment method success test")
+        # Verify that a user can successfully complete payment and book a flight
         with self.app.session_transaction() as session:
             session['email'] = self.test_email 
             session['selected_seat'] = "2B"
@@ -186,6 +188,7 @@ class FlaskAuthTests(unittest.TestCase):
     def test_12_booking_history(self):
         """Test accessing booking history for logged-in user."""
         print("Running booking history test")
+        # Verify that a user can access their booking history
         with self.app.session_transaction() as session:
             session['email'] = self.test_email
         # Create a test booking for the user
@@ -208,6 +211,7 @@ class FlaskAuthTests(unittest.TestCase):
     def test_13_cancel_booking(self):
         """Test canceling a booking by the logged-in user."""
         print("Running cancel booking test")
+        # Verify that a user can cancel a booking
         with self.app.session_transaction() as session:
             session['email'] = self.test_email # Log in the user
         # Create a test booking to be canceled
