@@ -176,7 +176,7 @@ class FlaskAuthTests(unittest.TestCase):
         self.assertIn(b'2B', response.data)  # Verify booking appears in the history
         print("Booking history test completed successfully")
 
-    def test13_cancel_booking(self):
+    def test_13_cancel_booking(self):
         print("Running cancel booking test")
         with self.app.session_transaction() as session:
             session['email'] = self.test_email # Log in the user
