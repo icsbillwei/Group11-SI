@@ -40,9 +40,6 @@ class Flight(db.Model):
     cost = db.Column(db.Float, nullable=False)
     seats = db.Column(MutableList.as_mutable(JSON), nullable=False)
 
-    # Relationships
-    bookings = db.relationship('Booking', backref='flight', lazy=True)
-
     def __repr__(self):
         return f'<Flight {self.flight_number}>'
 
@@ -201,9 +198,20 @@ def payment_method(flight_id):
             seat_label = session.get('selected_seat')
             user_email = session.get('email')
             flight = Flight.query.get_or_404(flight_id)
+            seat_row = session.get('seat_row')
+            seat_col = session.get('seat_col')
+
+            # print(f"seat row: {seat_row}, seat col: {seat_col}")
 
             # Create a booking record in the database with the seat information
-            new_booking = Booking(user_email=user_email, flight_id=flight.id, seats=seat_label)
+            new_booking = Booking(
+                user_email=user_email, 
+                flight_id=flight.id, 
+                seats=seat_label,
+                seat_row=seat_row,
+                seat_col=seat_col
+            )
+            flight.seats[seat_row][seat_col] = 1
             db.session.add(new_booking)
             db.session.commit()
 
@@ -248,34 +256,21 @@ def select_seat(flight_id):
         # Store selected seat in session temporarily
         session['selected_seat'] = seat_label
         session['flight_id'] = flight.id
-
-        
-        # Create new booking
-        new_booking = Booking(
-            user_email=session['email'],
-            flight_id=flight_id,
-            seat_row=row,
-            seat_col=col
-        )
+        session['seat_row'] = row
+        session['seat_col'] = col
         
         try:
             # Add booking and update seat map
-            db.session.add(new_booking)
-            flight.seats[row][col] = 1
-            db.session.commit()
+            # db.session.add(new_booking)
+            # flight.seats[row][col] = 1
+            # db.session.commit()
             return redirect(url_for('payment_method', flight_id=flight_id))
         except Exception as e:
+            print(e)
             db.session.rollback()
             return redirect(url_for('select_seat', flight_id=flight_id))
 
     return render_template('select_seat.html', flight=flight)
-
-@app.route('/payment_method/<int:flight_id>', methods=['GET', 'POST'])
-def payment_method(flight_id):
-    if request.method == 'POST':
-        flash('Payment successful!', 'success')
-        return redirect(url_for('book_flight'))
-    return render_template('payment_method.html', flight_id=flight_id)
 
 @app.route('/booking_history')
 def booking_history():
