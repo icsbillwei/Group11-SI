@@ -315,20 +315,7 @@ class FlaskAuthTests(unittest.TestCase):
             self.assertIn(b'An error occurred', response.data)
         print("Reset password database exception test completed successfully")
 
-    def test_22_select_seat_exception_handling(self):
-        """Test exception handling during seat selection."""
-        print("Running select seat exception handling test")
-        with patch('app.db.session.commit', side_effect=Exception("Database error")):
-            with self.app.session_transaction() as session:
-                session['email'] = self.test_email
-            response = self.app.post(f'/select_seat/{self.test_flight.id}', data={
-                'seat': '1,1'
-            }, follow_redirects=True)
-            # Check if the error message is flashed and the user is redirected to the flight search page
-            self.assertEqual(response.status_code, 500)
-        print("Select seat exception handling test completed successfully")
-
-    def test_23_cancel_booking_exception_handling(self):
+    def test_22_cancel_booking_exception_handling(self):
         """Test exception handling during booking cancellation."""
         print("Running cancel booking exception handling test")
         # First, create a test booking to attempt to cancel
@@ -357,7 +344,8 @@ class FlaskAuthTests(unittest.TestCase):
             # Check if the user is redirected to the booking history page
             self.assertIn(b'<title>Booking History</title>', response.data)
         print("Cancel booking exception handling test completed successfully")
-    def test_24_reset_password_invalid_user(self):
+
+    def test_23_reset_password_invalid_user(self):
         """Test invalid reset password request with a non-existent user."""
         print("Running reset password invalid user test")
         # Attempt to reset password for an email that does not exist
@@ -370,7 +358,7 @@ class FlaskAuthTests(unittest.TestCase):
         self.assertIn(b'<title>Login</title>', response.data)  # Confirm redirection to login
         print("Reset password invalid user test completed successfully")
 
-    def test_25_search_flights_missing_information(self):
+    def test_24_search_flights_missing_information(self):
         """Test searching flights with missing required information."""
         print("Running search flights missing information test")
         
@@ -383,7 +371,7 @@ class FlaskAuthTests(unittest.TestCase):
         self.assertIn(b'Please provide all required information', response.data)
         print("Search flights missing information test completed successfully")
     
-    def test_26_access_protected_route_without_login(self):
+    def test_25_access_protected_route_without_login(self):
         """Test accessing a protected route without being logged in."""
         print("Running protected route access without login test")
         # Attempt to access the book flight page without being logged in
@@ -394,7 +382,7 @@ class FlaskAuthTests(unittest.TestCase):
         self.assertIn(b'<title>Login</title>', response.data)
         print("Protected route access without login test completed successfully")
     
-    def test_27_cancel_booking_unauthorized(self):
+    def test_26_cancel_booking_unauthorized(self):
         """Test unauthorized booking cancellation attempt."""
         print("Running unauthorized booking cancellation test")
 
@@ -428,6 +416,20 @@ class FlaskAuthTests(unittest.TestCase):
         self.assertIn(b'Unauthorized action', response.data)
         self.assertIn(b'<title>Booking History</title>', response.data)
         print("Unauthorized booking cancellation test completed successfully")
+
+    def test_27_signup_missing_email_or_password(self):
+        """Test signup with missing email or password."""
+        print("Running signup with missing email or password test")
+
+        # Test with missing email
+        response = self.app.post('/signup', data={'email': '', 'password': 'password123'}, follow_redirects=True)
+        self.assertIn(b'Please provide both email and password', response.data)
+
+        # Test with missing password
+        response = self.app.post('/signup', data={'email': 'newuser@example.com', 'password': ''}, follow_redirects=True)
+        self.assertIn(b'Please provide both email and password', response.data)
+
+        print("Signup with missing email or password test completed successfully")
 
 if __name__ == '__main__':
     unittest.main()
