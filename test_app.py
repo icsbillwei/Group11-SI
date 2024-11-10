@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from flask import Flask
 from app import app, db, User, Flight, Booking, generate_seat_map
 from werkzeug.security import generate_password_hash
@@ -252,12 +253,12 @@ class FlaskAuthTests(unittest.TestCase):
         print("Login with missing email test completed successfully")
 
     def test_16_login_missing_password(self):
-        """Test signup with an invalid email format."""
+        """Test login with an invalid email format."""
         print("Running login with missing password test")
         # Test login without password
         response = self.app.post('/', data={'email': self.test_email, 'password': ''}, follow_redirects=True)
         self.assertIn(b'Please provide both email and password', response.data)
-        print("Signup with missing passwords format test completed successfully")
+        print("Login with missing passwords format test completed successfully")
 
     def test_17_forgot_password_nonexistent_email(self):
         """Test forgot password with a non-existing email."""
@@ -278,6 +279,155 @@ class FlaskAuthTests(unittest.TestCase):
         response = self.app.get('/book_flight', follow_redirects=True)
         self.assertIn(b'Please login first', response.data)
         print("Session timeout test completed successfully")
+
+    def test_19_signup_missing_password(self):
+        """Test signup with missing password."""
+        print("Running sign with missing password test")
+        # Test signup without password
+        response = self.app.post('/', data={'email': self.test_email, 'password': ''}, follow_redirects=True)
+        self.assertIn(b'Please provide both email and password', response.data)
+        print("Signup with missing passwords format test completed successfully")
+
+    def test_20_signup_database_error(self):
+        """Test signup route handling a database exception."""
+        print("Running signup database exception test")
+        with patch('app.db.session.commit', side_effect=Exception("Database error")):
+            # Attempt to sign up with valid data
+            response = self.app.post('/signup', data={
+                'email': 'erroruser@example.com',
+                'password': 'password123'
+            }, follow_redirects=True)
+            
+            # Check if the rollback was triggered and the error message is flashed
+            self.assertIn(b'An error occurred', response.data)
+        print("Signup database exception test completed successfully")
+
+    def test_21_reset_password_database_error(self):
+        """Test reset password route handling a database exception."""
+        print("Running reset password database exception test")
+        with patch('app.db.session.commit', side_effect=Exception("Database error")):
+            # Attempt to reset the password with valid data
+            response = self.app.post(f'/reset_password/{self.test_email}', data={
+                'password': 'newpassword123'
+            }, follow_redirects=True)
+            
+            # Check if the rollback was triggered and the error message is flashed
+            self.assertIn(b'An error occurred', response.data)
+        print("Reset password database exception test completed successfully")
+
+    def test_22_select_seat_exception_handling(self):
+        """Test exception handling during seat selection."""
+        print("Running select seat exception handling test")
+        with patch('app.db.session.commit', side_effect=Exception("Database error")):
+            with self.app.session_transaction() as session:
+                session['email'] = self.test_email
+            response = self.app.post(f'/select_seat/{self.test_flight.id}', data={
+                'seat': '1,1'
+            }, follow_redirects=True)
+            # Check if the error message is flashed and the user is redirected to the flight search page
+            self.assertEqual(response.status_code, 500)
+        print("Select seat exception handling test completed successfully")
+
+    def test_23_cancel_booking_exception_handling(self):
+        """Test exception handling during booking cancellation."""
+        print("Running cancel booking exception handling test")
+        # First, create a test booking to attempt to cancel
+        with app.app_context():
+            test_booking = Booking(
+                user_email=self.test_email,
+                flight_id=self.test_flight.id,
+                seats="2B",
+                seat_row=1,
+                seat_col=1
+            )
+            db.session.add(test_booking)
+            db.session.commit()
+            booking_id = test_booking.id
+
+        # Patch the db.session.commit to raise an exception to simulate a failure
+        with patch('app.db.session.commit', side_effect=Exception("Database error")):
+            with self.app.session_transaction() as session:
+                session['email'] = self.test_email
+            
+            # Attempt to cancel the booking, which should raise an exception and trigger rollback
+            response = self.app.post(f'/cancel_booking/{booking_id}', follow_redirects=True)
+            
+            # Check if the rollback was triggered and the error message is flashed
+            self.assertIn(b'An error occurred', response.data)
+            # Check if the user is redirected to the booking history page
+            self.assertIn(b'<title>Booking History</title>', response.data)
+        print("Cancel booking exception handling test completed successfully")
+    def test_24_reset_password_invalid_user(self):
+        """Test invalid reset password request with a non-existent user."""
+        print("Running reset password invalid user test")
+        # Attempt to reset password for an email that does not exist
+        response = self.app.post('/reset_password/nonexistent@example.com', data={
+            'password': 'newpassword123'
+        }, follow_redirects=True)
+        
+        # Check that the error message is flashed and user is redirected to login
+        self.assertIn(b'Invalid reset request', response.data)
+        self.assertIn(b'<title>Login</title>', response.data)  # Confirm redirection to login
+        print("Reset password invalid user test completed successfully")
+
+    def test_25_search_flights_missing_information(self):
+        """Test searching flights with missing required information."""
+        print("Running search flights missing information test")
+        
+        # Test missing departure_airport
+        response = self.app.post('/search_flights', data={
+            'departure_airport': '',
+            'arrival_location': 'LAX',
+            'departure_date': '2024-11-05'
+        }, follow_redirects=True)
+        self.assertIn(b'Please provide all required information', response.data)
+        print("Search flights missing information test completed successfully")
+    
+    def test_26_access_protected_route_without_login(self):
+        """Test accessing a protected route without being logged in."""
+        print("Running protected route access without login test")
+        # Attempt to access the book flight page without being logged in
+        response = self.app.get('/book_flight', follow_redirects=True)
+
+        # Check for redirection to login page
+        self.assertIn(b'Please login first', response.data)
+        self.assertIn(b'<title>Login</title>', response.data)
+        print("Protected route access without login test completed successfully")
+    
+    def test_27_cancel_booking_unauthorized(self):
+        """Test unauthorized booking cancellation attempt."""
+        print("Running unauthorized booking cancellation test")
+
+        # Create a booking for a different user
+        with app.app_context():
+            another_user_email = 'otheruser@example.com'
+            other_user = User(email=another_user_email)
+            other_user.set_password('password123')
+            db.session.add(other_user)
+            db.session.commit()
+
+            # Book a seat for the other user
+            other_booking = Booking(
+                user_email=another_user_email,
+                flight_id=self.test_flight.id,
+                seats="3C",
+                seat_row=2,
+                seat_col=2
+            )
+            db.session.add(other_booking)
+            db.session.commit()
+            booking_id = other_booking.id
+
+        # Log in as the test user and attempt to cancel the other user's booking
+        with self.app.session_transaction() as session:
+            session['email'] = self.test_email
+        
+        response = self.app.post(f'/cancel_booking/{booking_id}', follow_redirects=True)
+
+        # Check for unauthorized action flash message and redirection to booking history
+        self.assertIn(b'Unauthorized action', response.data)
+        self.assertIn(b'<title>Booking History</title>', response.data)
+        print("Unauthorized booking cancellation test completed successfully")
 
 if __name__ == '__main__':
     unittest.main()
