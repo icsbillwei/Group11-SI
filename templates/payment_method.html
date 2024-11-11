@@ -151,6 +151,27 @@
             margin-bottom: 10px;
         }
 
+        /* Alert styles */
+        .alert {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .form-container {
@@ -170,6 +191,7 @@
             <div class="dropdown-menu" id="dropdownMenu">
                 <a href="{{ url_for('book_flight') }}">Home</a>
                 <a href="{{ url_for('booking_history') }}">Booking History</a>
+                <a href="{{ url_for('logout') }}">Log Out</a>
                 <!-- Add more links here if needed -->
             </div>
         </div>
