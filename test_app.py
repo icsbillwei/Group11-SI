@@ -505,7 +505,7 @@ class FlaskAuthTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         print("Select seat invalid selection test completed successfully")
 
-    def test_33_booking_history_no_bookings(self):
+    def test_32_booking_history_no_bookings(self):
         """Test booking history for user with no bookings."""
         print("Running booking history no bookings test")
         with self.app.session_transaction() as session:
@@ -523,7 +523,7 @@ class FlaskAuthTests(unittest.TestCase):
         # Verify empty booking history handling
         print("Booking history no bookings test completed successfully")
 
-    def test_34_forgot_password_edge_cases(self):
+    def test_33_forgot_password_edge_cases(self):
         """Test forgot password functionality with edge cases."""
         print("Running forgot password edge cases test")
         # Test with empty email
@@ -538,8 +538,7 @@ class FlaskAuthTests(unittest.TestCase):
         }, follow_redirects=True)
         self.assertIn(b'Email not found', response.data)
         print("Forgot password edge cases test completed successfully")
-
-    
+  
 
 if __name__ == '__main__':
     unittest.main()
