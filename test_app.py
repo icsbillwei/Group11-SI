@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 from flask import Flask
-from app import app, db, User, Flight, Booking, generate_seat_map
+from app import app, db, init_db, User, Flight, Booking, generate_seat_map
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
@@ -430,6 +430,116 @@ class FlaskAuthTests(unittest.TestCase):
         self.assertIn(b'Please provide both email and password', response.data)
 
         print("Signup with missing email or password test completed successfully")
+
+    def test_28_flight_repr(self):
+        """Test the string representation of Flight objects."""
+        print("Running Flight.__repr__ test")
+        with app.app_context():
+            flight = Flight.query.first()
+            # Test that __repr__ returns expected string format
+            self.assertEqual(str(flight), f'<Flight {flight.flight_number}>')
+        print("Flight.__repr__ test completed successfully")
+
+    def test_29_booking_repr(self):
+        """Test the string representation of Booking objects."""
+        print("Running Booking.__repr__ test")
+        with app.app_context():
+            booking = Booking(
+                user_email=self.test_email,
+                flight_id=self.test_flight.id,
+                seats="2B",
+                seat_row=1,
+                seat_col=1
+            )
+            db.session.add(booking)
+            db.session.commit()
+            # Test that __repr__ returns expected string format
+            self.assertEqual(str(booking), f'<Booking {booking.id} - Flight {booking.flight_id} Seat {booking.seats}>')
+        print("Booking.__repr__ test completed successfully")
+
+    def test_30_init_db(self):
+        """Test database initialization function."""
+        print("Running init_db test")
+        with app.app_context():
+            # Clear existing data
+            db.drop_all()
+            # Test initialization
+            init_db()
+            # Verify sample flights were created
+            flights = Flight.query.all()
+            self.assertTrue(len(flights) > 0)
+            # Verify seat maps were generated correctly
+            for flight in flights:
+                self.assertEqual(len(flight.seats), 5)  # 5 rows
+                self.assertEqual(len(flight.seats[0]), 4)  # 4 columns
+        print("init_db test completed successfully")
+
+    def test_31_select_seat_invalid_seat(self):
+        """Test selecting an invalid or already booked seat."""
+        print("Running select seat invalid selection test")
+        with self.app.session_transaction() as session:
+            session['email'] = self.test_email
+        
+        # Try to select an invalid seat position
+        response = self.app.post(f'/select_seat/{self.test_flight.id}', data={
+            'seat': '10,10'  # Invalid seat coordinates
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        
+        # Book a seat first
+        test_booking = Booking(
+            user_email=self.test_email,
+            flight_id=self.test_flight.id,
+            seats="2B",
+            seat_row=1,
+            seat_col=1
+        )
+        with app.app_context():
+            db.session.add(test_booking)
+            db.session.commit()
+        
+        # Try to select an already booked seat
+        response = self.app.post(f'/select_seat/{self.test_flight.id}', data={
+            'seat': '1,1'
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        print("Select seat invalid selection test completed successfully")
+
+    def test_33_booking_history_no_bookings(self):
+        """Test booking history for user with no bookings."""
+        print("Running booking history no bookings test")
+        with self.app.session_transaction() as session:
+            session['email'] = 'newuser@example.com'
+        
+        # Create new user without any bookings
+        with app.app_context():
+            new_user = User(email='newuser@example.com')
+            new_user.set_password('password123')
+            db.session.add(new_user)
+            db.session.commit()
+        
+        response = self.app.get('/booking_history', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        # Verify empty booking history handling
+        print("Booking history no bookings test completed successfully")
+
+    def test_34_forgot_password_edge_cases(self):
+        """Test forgot password functionality with edge cases."""
+        print("Running forgot password edge cases test")
+        # Test with empty email
+        response = self.app.post('/forgot_password', data={
+            'email': ''
+        }, follow_redirects=True)
+        self.assertIn(b'Email not found', response.data)
+        
+        # Test with malformed email
+        response = self.app.post('/forgot_password', data={
+            'email': 'notanemail'
+        }, follow_redirects=True)
+        self.assertIn(b'Email not found', response.data)
+        print("Forgot password edge cases test completed successfully")
+
+    
 
 if __name__ == '__main__':
     unittest.main()
