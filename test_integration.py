@@ -76,7 +76,7 @@ class IntegrationTestCase2(unittest.TestCase):
             db.session.remove()
             db.drop_all()
 
-    def test_login_book_flight_and_check_history(self):
+    def test_login_book_flight(self):
         """Test user login, booking a flight, and viewing booking history."""
         print("Running login, book flight, and check booking history integration test")
 
@@ -98,7 +98,7 @@ class IntegrationTestCase2(unittest.TestCase):
         self.assertIn(b'Book a Flight', response.data)
         print("Login test completed successfully")
 
-        # # Search for flights and select a flight
+        # Search for flights and select a flight
         print("Searching for flights and selecting a flight")
         response = self.app.post('/search_flights', data={
             'departure_airport': 'JFK',
@@ -123,6 +123,41 @@ class IntegrationTestCase2(unittest.TestCase):
         self.assertIn(b'Payment successful!', response.data)
         print("Booking confirmation test completed successfully")
 
+class IntegrationTestCase3(unittest.TestCase):
+    def setUp(self):
+        """Set up the test environment before each test."""
+        app.config['TESTING'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        self.app = app.test_client()
+        with app.app_context():
+            db.create_all()
+
+    def tearDown(self):
+        """Clean up the test environment after each test."""
+        with app.app_context():
+            db.session.remove()
+            db.drop_all()
+    
+    def test_signup_login_logout(self):
+        """Test user signup, login, booking a flight, and viewing booking history."""
+        print("Running signup, login, book flight, and check booking history integration test")
+        # Sign up and login tests
+        response = self.app.post('/signup', data={
+            'email': 'testuser@example.com',
+            'password': 'password123'
+        }, follow_redirects=True)
+        self.assertIn(b'Account created successfully', response.data)
+
+        response = self.app.post('/', data={
+            'email': 'testuser@example.com',
+            'password': 'password123'
+        }, follow_redirects=True)
+        self.assertIn(b'Book a Flight', response.data)
+        #User attempt logout
+        response = self.app.get('/logout', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'You have been logged out', response.data)
+        print("Signup, login, and logout test completed successfully")
 
 if __name__ == '__main__':
     unittest.main()
