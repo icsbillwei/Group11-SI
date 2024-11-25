@@ -5,7 +5,7 @@ from app import app, db, User, Flight, Booking, generate_seat_map
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
-class IntegrationTestCase(unittest.TestCase):
+class IntegrationTestCase1(unittest.TestCase):
     def setUp(self):
         """Set up the test environment before each test."""
         app.config['TESTING'] = True
