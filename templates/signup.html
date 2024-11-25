@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Sign Up</title>
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
@@ -159,9 +159,9 @@
 <body>
     <div class="page-container">
         <div class="overlay-text">
-            Fly With Us, Today
+            Join Us Today
         </div>
-        <div class="login-container">            
+        <div class="login-container">
             <!-- Flask flash message display -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -171,14 +171,13 @@
                 {% endif %}
             {% endwith %}
             
-            <h2>User Login</h2>
-            <form action="{{ url_for('login') }}" method="POST">
+            <h2>Create New Account</h2>
+            <form action="{{ url_for('signup') }}" method="POST">
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="password" placeholder="Password" required>
-                <button type="submit">Log in</button>
+                <button type="submit">Sign Up</button>
             </form>
-            <a class="create-account" href="{{ url_for('signup') }}">Create new account</a>
-            <a class="create-account" href="{{ url_for('forgot_password') }}">I forgot my password</a>
+            <a class="create-account" href="{{ url_for('login') }}">Back to Login</a>
         </div>
     </div>
 </body>

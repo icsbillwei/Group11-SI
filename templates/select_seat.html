@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Seat</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url("{{ url_for('static', filename='background.png') }}");
+            background-size: cover;
+            background-position: center;
+        }
+
+        .page-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px;
+        }
+
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .burger-icon {
+            cursor: pointer;
+        }
+
+        .burger-lines {
+            width: 30px;
+            height: 3px;
+            background-color: white;
+            margin: 6px 0;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            background-color: white;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-menu a:hover {
+            background-color: #f0f0f0;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 80px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            width: 500px;
+            animation: fadeIn 1s ease-out;
+            text-align: center;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #333;
+            gap: 10px;
+            margin-bottom: 50px;
+        }
+
+        .legend div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .available-color { background-color: #86ccff; }
+        .occupied-color { background-color: #FF8686; }
+        .selected-color { border: 2px solid #1e90ff; background-color: #86ccff; }
+
+        .seat-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .seat-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .seat {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+
+        .seat.available {
+            background-color: #86ccff;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .seat.occupied {
+            background-color: #FF8686;
+            cursor: not-allowed;
+            border: 2px solid transparent;
+        }
+
+        .seat.selected {
+            border: 4px solid #1e90ff;
+        }
+
+        .seat-row .aisle-space {
+            width: 20px; /* Simulate an aisle */
+        }
+
+        .confirm-button {
+            display: none;
+            background-color: #1e90ff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 20px auto 0;
+            transition: background-color 0.2s;
+        }
+
+        .confirm-button:hover {
+            background-color: #0073e6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .form-container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="navbar">
+            <div class="burger-icon" onclick="toggleDropdown()">
+                <div class="burger-lines"></div>
+                <div class="burger-lines"></div>
+                <div class="burger-lines"></div>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="{{ url_for('book_flight') }}">Home</a>
+                <a href="{{ url_for('booking_history') }}">Booking History</a>
+                <a href="{{ url_for('logout') }}">Log Out</a>
+                <!-- add more links here if needed -->
+            </div>
+        </div>
+
+        <div class="form-container">
+            <h2>Select Your Seat for Flight {{ flight.flight_number }}</h2>
+            <div class="legend">
+                <div>🡱 Front of Plane</div>
+                <div>
+                    <div class="legend-color available-color"></div> Available
+                    <div class="legend-color occupied-color"></div> Occupied
+                    <div class="legend-color selected-color"></div> Selected
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('select_seat', flight_id=flight.id) }}">
+                <div class="seat-grid">
+                    {% for row in range(flight.seats | length) %}
+                        <div class="seat-row">
+                            {% for col in range(flight.seats[row] | length) %}
+                                {% if col == 2 %}
+                                    <div class="aisle-space"></div>
+                                {% endif %}
+                                {% if flight.seats[row][col] == 0 %}
+                                    <!-- Available seat -->
+                                    <button type="button" class="seat available" onclick="selectSeat(this, '{{ row }},{{ col }}')"></button>
+                                {% else %}
+                                    <!-- Occupied seat -->
+                                    <button class="seat occupied" disabled></button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="seat" id="selectedSeat">
+                <button type="submit" class="confirm-button" id="confirmButton">Confirm</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown() {
+            const dropdown = document.getElementById("dropdownMenu");
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+
+        function selectSeat(button, seat) {
+            // Remove selected class from any previously selected seat
+            document.querySelectorAll('.seat.selected').forEach(seat => seat.classList.remove('selected'));
+
+            // Mark this seat as selected
+            button.classList.add('selected');
+
+            // Store the selected seat in a hidden input field
+            document.getElementById("selectedSeat").value = seat;
+
+            // Show the confirm button
+            document.getElementById("confirmButton").style.display = "block";
+        }
+    </script>
+</body>
+</html>
