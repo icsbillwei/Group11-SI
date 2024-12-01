@@ -58,6 +58,7 @@ def test_user_signup_and_login(driver, baseURL):
         page_source = driver.page_source
         if "Book a Flight" in page_source:
             print("Login successful, redirected to 'Book a Flight' page.")
+            print("Test 1 Success: User Signup and Login Test completed successfully.")
         else:
             print("Login failed or redirection did not occur.")
         time.sleep(1)  # Pause for visualization
@@ -107,6 +108,7 @@ def test_search_and_book_flight(driver, baseURL):
         page_source = driver.page_source
         if "Flight Results" in page_source:
             print("Flight search successful, results displayed.")
+            print("Test 2 Success: Search and Book a Valid Flight Test completed successfully.")
         else:
             print("Flight search failed or no results found.")
         time.sleep(1)  # Pause for visualization
@@ -186,15 +188,17 @@ def test_successfully_book_flight(driver, baseURL):
         expiry_date_input = driver.find_element(By.ID, "expiry-date")
         cvv_input = driver.find_element(By.ID, "cvv")
 
-        card_number_input.send_keys("1234567812345678")  # Example valid card number
-        expiry_date_input.send_keys("12/25")  # Example valid expiry date (December 2025)
-        cvv_input.send_keys("123")  # Example valid CVV
+        card_number_input.send_keys("1234567812345678")
+        expiry_date_input.send_keys("12/25")
+        cvv_input.send_keys("123")
         print("Entered valid card details.")
+        time.sleep(1)  # Pause for visualization
 
         # Step 8: Click the Confirm Payment button
         confirm_button = driver.find_element(By.XPATH, "//button[@type='submit']")
         confirm_button.click()
         print("Clicked Confirm Payment button.")
+        time.sleep(1)  # Pause for visualization
 
         # Step 9: Verify Booking Success
         WebDriverWait(driver, 10).until(
@@ -202,11 +206,11 @@ def test_successfully_book_flight(driver, baseURL):
         )
         page_source = driver.page_source
         if "Booking History" in page_source:
-            print("Flight booking successful.")
+            print("Flight booking successful, redirected to 'Booking History' page.")
+            print("Test 3 Success: Successfully Book a Flight Test completed successfully.")
         else:
             print("Flight booking failed or confirmation not displayed.")
         time.sleep(1)  # Pause for visualization
-
     except Exception as e:
         print(f"An error occurred during the flight booking test: {e}")
 
@@ -218,5 +222,6 @@ if __name__ == "__main__":
         test_user_signup_and_login(driver, baseURL)
         test_search_and_book_flight(driver, baseURL)
         test_successfully_book_flight(driver, baseURL)
+        print("All tests completed successfully. Exiting.")
     finally:
         driver.quit()
